@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tienda Virtual</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <style>
+    body { padding: 1rem; }
+    .product-card img { width: 100%; height: 150px; object-fit: cover; }
+    .product-card { border: 1px solid #ddd; border-radius: 10px; padding: 10px; margin-bottom: 1rem; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 5px; }
+    .cart-item img { width: 40px; height: 40px; object-fit: cover; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="d-flex justify-content-between align-items-center mb-4">
+      <h1>Tienda Virtual</h1>
+      <div>
+        <button id="btnLogin" class="btn btn-primary me-2">Login</button>
+        <button id="btnRegister" class="btn btn-outline-primary me-2">Registrarse</button>
+        <button id="btnCreateProduct" class="btn btn-success" style="display:none;">Crear Producto</button>
+        <button id="btnCart" class="btn btn-secondary">🛒 Ver Carrito (<span id="cart-count">0</span>)</button>
+      </div>
+    </header>
+
+    <div class="row" id="product-list"></div>
+
+    <!-- Modal Login -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Iniciar Sesión</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="email" id="email" class="form-control mb-2" placeholder="Email" />
+            <input type="password" id="password" class="form-control mb-2" placeholder="Contraseña" />
+            <button id="btnLoginSubmit" class="btn btn-primary w-100">Login</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Registrarse -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Registrarse</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="email" id="reg-email" class="form-control mb-2" placeholder="Email" />
+            <input type="password" id="reg-password" class="form-control mb-2" placeholder="Contraseña" />
+            <button id="btnRegisterSubmit" class="btn btn-success w-100">Crear Cuenta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Carrito -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Carrito de Compras</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="cart-items"></div>
+          <div class="modal-footer">
+            <strong>Total: $<span id="cart-total">0</span></strong>
+            <button id="btnFinalizePurchase" class="btn btn-success">Finalizar Compra</button>
+            <button id="btnClearCart" class="btn btn-danger">Borrar Carrito</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Producto (Agregar/Editar) -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalProductTitle">Nuevo Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" id="prod-nombre" class="form-control mb-2" placeholder="Nombre" />
+            <input type="number" id="prod-precio" class="form-control mb-2" placeholder="Precio" />
+            <textarea id="prod-desc" class="form-control mb-2" placeholder="Descripción"></textarea>
+            <input type="file" id="prod-imagen" class="form-control mb-2" />
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="prod-habilitado" />
+              <label class="form-check-label">Habilitado</label>
+            </div>
+            <button id="btnSaveProduct" class="btn btn-primary w-100 mt-3">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalProductTitle">Nuevo Producto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="prod-nombre" class="form-control mb-2" placeholder="Nombre" />
+        <textarea id="prod-desc" class="form-control mb-2" placeholder="Descripción"></textarea>
+        <input type="number" id="prod-precio" class="form-control mb-2" placeholder="Precio" min="0" step="0.01" />
+        <input type="number" id="prod-cantidad" class="form-control mb-2" placeholder="Cantidad" min="0" step="1" />
+        <input type="file" id="prod-imagen" class="form-control mb-2" />
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="prod-habilitado" />
+          <label class="form-check-label" for="prod-habilitado">Habilitado</label>
+        </div>
+        <button id="btnSaveProduct" class="btn btn-primary w-100 mt-3">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCw1evReelfvxRqX0-0bmgtRmnCp9tzMxI",
+      authDomain: "pdf-reader-8a70f.firebaseapp.com",
+      projectId: "pdf-reader-8a70f",
+      storageBucket: "pdf-reader-8a70f.firebasestorage.app",
+      messagingSenderId: "708163927030",
+      appId: "1:708163927030:web:5eba1f97fdf04a9f1c65d7",
+      measurementId: "G-HNPLHFQ9WD"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const productosRef = collection(db, "productos");
+
+    let carrito = [];
+    let usuarioActual = null;
+    let isAdmin = false;
+
+    async function verificarRol(uid) {
+      const userRef = doc(db, "users", uid);
+      console.log(userRef)
+      const docSnap = await getDoc(userRef);
+      console.log(docSnap)
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        return data.role === "admin";
+      } else {
+        return false;
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    usuarioActual = user;
+    console.log(user)
+    isAdmin = await verificarRol(user.uid);
+    if (isAdmin) {
+      renderProductos();
+      document.getElementById('btnCreateProduct').style.display = 'inline-block';
+    } else {
+      document.getElementById('btnCreateProduct').style.display = 'none';
+    }
+    alert("Sesión iniciada como " + (isAdmin ? "Administrador" : "Usuario"));
+  } else {
+    usuarioActual = null;
+    isAdmin = false;
+    document.getElementById('btnCreateProduct').style.display = 'none';
+  }
+});
+
+
+    // Funciones:
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        bootstrap.Modal.getInstance(document.getElementById("loginModal")).hide();
+      } catch (e) {
+        alert("Error de login: " + e.message);
+      }
+    }
+
+    async function register() {
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        bootstrap.Modal.getInstance(document.getElementById("registerModal")).hide();
+        alert("Usuario creado correctamente. Ahora puedes iniciar sesión.");
+      } catch (e) {
+        alert("Error al registrar: " + e.message);
+      }
+    }
+
+    async function renderProductos() {
+      const container = document.getElementById("product-list");
+      container.innerHTML = "";
+      const q = isAdmin ? productosRef : query(productosRef, where("habilitado", "==", true));
+      const snapshot = await getDocs(q);
+      snapshot.forEach((docSnap) => {
+        const p = docSnap.data();
+        container.innerHTML += `
+          <div class="col-md-4">
+            <div class="product-card">
+              <img src="${p.imgUrl}" alt="" />
+              <h5>${p.nombre}</h5>
+              <p>$${p.precio}</p>
+              <button class="btn btn-sm btn-outline-primary btn-add" data-id="${docSnap.id}" data-nombre="${p.nombre}" data-precio="${p.precio}" data-imgurl="${p.imgUrl}">Agregar</button>
+              ${
+                isAdmin
+                  ? `<button class="btn btn-sm btn-warning btn-edit" 
+                    data-id="${docSnap.id}" data-nombre="${p.nombre}" data-precio="${p.precio}" data-desc="${p.descripcion}" data-habilitado="${p.habilitado}" data-imgurl="${p.imgUrl}">Editar</button>`
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+      });
+
+      // Añadir listeners a botones "Agregar"
+      document.querySelectorAll(".btn-add").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          agregarAlCarrito(
+            btn.dataset.id,
+            btn.dataset.nombre,
+            Number(btn.dataset.precio),
+            btn.dataset.imgurl
+          );
+        });
+      });
+
+      // Añadir listeners a botones "Editar"
+      document.querySelectorAll(".btn-edit").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          editarProducto(
+            btn.dataset.id,
+            btn.dataset.nombre,
+            Number(btn.dataset.precio),
+            btn.dataset.desc,
+            btn.dataset.habilitado === "true",
+            btn.dataset.imgurl
+          );
+        });
+      });
+    }
+
+    async function guardarProducto() {
+    const nombre = document.getElementById("prod-nombre").value;
+    const precio = Number(document.getElementById("prod-precio").value);
+    const descripcion = document.getElementById("prod-desc").value;
+    const cantidad = Number(document.getElementById("prod-cantidad").value);
+    const habilitado = document.getElementById("prod-habilitado").checked;
+    const imagen = document.getElementById("prod-imagen").files[0];
+
+    let imgUrl = "";
+    if (imagen) {
+        const imgRef = ref(storage, "productos/" + imagen.name);
+        await uploadBytes(imgRef, imagen);
+        imgUrl = await getDownloadURL(imgRef);
+    }
+
+    await addDoc(productosRef, { nombre, precio, descripcion, cantidad, habilitado, imgUrl });
+    bootstrap.Modal.getInstance(document.getElementById("productModal")).hide();
+    renderProductos();
+    }
+
+
+    function editarProducto(id, nombre, precio, descripcion, habilitado, imgUrl) {
+      document.getElementById("prod-nombre").value = nombre;
+      document.getElementById("prod-precio").value = precio;
+      document.getElementById("prod-desc").value = descripcion;
+      document.getElementById("prod-habilitado").checked = habilitado;
+      document.getElementById("modalProductTitle").innerText = "Editar Producto";
+      document.getElementById("productModal").setAttribute("data-id", id);
+      new bootstrap.Modal(document.getElementById("productModal")).show();
+    }
+
+    function agregarAlCarrito(id, nombre, precio, imgUrl) {
+      const existente = carrito.find((p) => p.id === id);
+      if (existente) existente.cantidad++;
+      else carrito.push({ id, nombre, precio, imgUrl, cantidad: 1 });
+      document.getElementById("cart-count").innerText = carrito.reduce((sum, p) => sum + p.cantidad, 0);
+    }
+
+    function renderCarrito() {
+      const cartDiv = document.getElementById("cart-items");
+      const totalDiv = document.getElementById("cart-total");
+      cartDiv.innerHTML = "";
+      let total = 0;
+      carrito.forEach((p) => {
+        total += p.precio * p.cantidad;
+        cartDiv.innerHTML += `
+          <div class="cart-item">
+            <img src="${p.imgUrl}" alt="" />
+            <div>${p.nombre} x${p.cantidad} - $${p.precio * p.cantidad}</div>
+          </div>
+        `;
+      });
+      totalDiv.innerText = total;
+    }
+
+    function finalizarCompra() {
+      alert("¡Compra realizada!");
+      carrito.length = 0;
+      renderCarrito();
+      document.getElementById("cart-count").innerText = 0;
+    }
+
+    function borrarCarrito() {
+      carrito.length = 0;
+      renderCarrito();
+      document.getElementById("cart-count").innerText = 0;
+    }
+
+    function toggleLoginModal() {
+      new bootstrap.Modal(document.getElementById("loginModal")).show();
+    }
+
+    function toggleCartModal() {
+      renderCarrito();
+      new bootstrap.Modal(document.getElementById("cartModal")).show();
+    }
+
+    // Exportamos funciones para que estén accesibles globalmente (si es necesario)
+    window.login = login;
+    window.register = register;
+    window.renderProductos = renderProductos;
+    window.guardarProducto = guardarProducto;
+    window.editarProducto = editarProducto;
+    window.agregarAlCarrito = agregarAlCarrito;
+    window.renderCarrito = renderCarrito;
+    window.finalizarCompra = finalizarCompra;
+    window.borrarCarrito = borrarCarrito;
+    window.toggleLoginModal = toggleLoginModal;
+    window.toggleCartModal = toggleCartModal;
+
+    // Asignación de eventos DOM después de cargar la página
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("btnLogin").addEventListener("click", toggleLoginModal);
+      document.getElementById("btnRegister").addEventListener("click", () => {
+        new bootstrap.Modal(document.getElementById("registerModal")).show();
+      });
+      document.getElementById("btnCart").addEventListener("click", toggleCartModal);
+
+      document.getElementById("btnLoginSubmit").addEventListener("click", login);
+      document.getElementById("btnRegisterSubmit").addEventListener("click", register);
+      document.getElementById("btnSaveProduct").addEventListener("click", guardarProducto);
+      document.getElementById("btnFinalizePurchase").addEventListener("click", finalizarCompra);
+      document.getElementById("btnClearCart").addEventListener("click", borrarCarrito);
+
+        const btnCreateProduct = document.getElementById("btnCreateProduct");
+        btnCreateProduct.addEventListener("click", () => {
+            // Limpia el modal para crear producto nuevo
+            document.getElementById("prod-nombre").value = "";
+            document.getElementById("prod-desc").value = "";
+            document.getElementById("prod-precio").value = "";
+            document.getElementById("prod-cantidad").value = "";
+            document.getElementById("prod-habilitado").checked = false;
+            document.getElementById("modalProductTitle").innerText = "Nuevo Producto";
+            document.getElementById("productModal").removeAttribute("data-id");
+            new bootstrap.Modal(document.getElementById("productModal")).show();
+        });
+
+      // Render productos solo si ya está autenticado
+      if (auth.currentUser) renderProductos();
+    });
+  </script>
+</body>
+</html>
